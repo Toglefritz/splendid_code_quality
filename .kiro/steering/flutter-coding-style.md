@@ -281,14 +281,14 @@ lib/services/authentication/models/
 **✅ Using library directive to group related files:**
 ```dart
 // lib/services/authentication/models/auth_method.dart
-library authentication.models;
+library;
 
 enum AuthMethod { basicAuth, google, apple }
 ```
 
 ```dart
 // lib/services/authentication/models/auth_credentials.dart
-library authentication.models;
+library;
 
 class AuthCredentials {
   // Implementation
@@ -297,7 +297,7 @@ class AuthCredentials {
 
 ```dart
 // lib/services/authentication/models/auth_result.dart
-library authentication.models;
+library;
 
 class AuthResult {
   // Implementation
