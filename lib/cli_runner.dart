@@ -143,7 +143,7 @@ class CliRunner {
     final List<File> dartFiles = directory
         .listSync(recursive: true)
         .whereType<File>()
-        .where((File file) => file.path.endsWith('.dart'))
+        .where((file) => file.path.endsWith('.dart'))
         .toList();
 
     if (dartFiles.isEmpty) {
@@ -156,11 +156,18 @@ class CliRunner {
 
     final CyclomaticComplexityAnalyzer analyzer = CyclomaticComplexityAnalyzer();
     int totalComplexity = 0;
+    int maxComplexity = 0;
+    String maxComplexityFile = '';
 
     for (final File file in dartFiles) {
       final String sourceCode = file.readAsStringSync();
       final ComplexityResult result = analyzer.analyze(sourceCode);
       totalComplexity += result.complexity;
+
+      if (result.complexity > maxComplexity) {
+        maxComplexity = result.complexity;
+        maxComplexityFile = file.path;
+      }
 
       print('${file.path}: ${result.complexity}');
     }
@@ -168,6 +175,7 @@ class CliRunner {
     print('');
     print('Total files analyzed: ${dartFiles.length}');
     print('Average complexity: ${(totalComplexity / dartFiles.length).toStringAsFixed(1)}');
+    print('Maximum complexity: $maxComplexity ($maxComplexityFile)');
   }
 
   String _loadVersion() {

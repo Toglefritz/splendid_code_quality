@@ -1,37 +1,33 @@
 /// Analyzes Dart source code to calculate cyclomatic complexity.
 library;
 
+import 'package:analyzer/dart/analysis/features.dart';
+import 'package:analyzer/dart/analysis/utilities.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+
 part 'complexity_result.dart';
+part 'complexity_visitor.dart';
 
 /// Analyzes Dart source code to calculate cyclomatic complexity.
 ///
 /// Cyclomatic complexity measures the number of independent paths through a program's source code by counting decision
-/// points.
+/// points using AST analysis.
 class CyclomaticComplexityAnalyzer {
   /// Analyzes the given Dart source code and returns complexity metrics.
   ///
   /// The [sourceCode] parameter contains the Dart code to analyze. Returns a [ComplexityResult] containing the analysis
   /// results.
   ComplexityResult analyze(String sourceCode) {
-    int complexity = 1; // Base complexity starts at 1
+    final parseResult = parseString(
+      content: sourceCode,
+      featureSet: FeatureSet.latestLanguageVersion(),
+      throwIfDiagnostics: false,
+    );
 
-    // Count decision points that increase complexity
-    complexity += _countOccurrences(sourceCode, 'if');
-    complexity += _countOccurrences(sourceCode, 'else if');
-    complexity += _countOccurrences(sourceCode, 'for');
-    complexity += _countOccurrences(sourceCode, 'while');
-    complexity += _countOccurrences(sourceCode, 'case');
-    complexity += _countOccurrences(sourceCode, 'catch');
-    complexity += _countOccurrences(sourceCode, '&&');
-    complexity += _countOccurrences(sourceCode, '||');
-    complexity += _countOccurrences(sourceCode, '??');
-    complexity += _countOccurrences(sourceCode, '?');
+    final _ComplexityVisitor visitor = _ComplexityVisitor();
+    parseResult.unit.visitChildren(visitor);
 
-    return ComplexityResult(complexity: complexity);
-  }
-
-  /// Counts the number of times a keyword or operator appears in the source code.
-  int _countOccurrences(String sourceCode, String pattern) {
-    return pattern.allMatches(sourceCode).length;
+    return ComplexityResult(complexity: visitor.complexity);
   }
 }
