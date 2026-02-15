@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'cyclomatic_complexity/cyclomatic_complexity_analyzer.dart';
+import 'lines_of_code/loc_analyzer.dart';
 
 /// Runs the Splendid Code Quality CLI tool.
 ///
@@ -37,6 +38,9 @@ class CliRunner {
       if (results.command?.name == 'complexity') {
         return _handleComplexityCommand(results.command!);
       }
+      if (results.command?.name == 'loc') {
+        return _handleLocCommand(results.command!);
+      }
 
       // No command provided
       _printUsage(argParser);
@@ -62,7 +66,8 @@ class CliRunner {
         negatable: false,
         help: 'Print the tool version.',
       )
-      ..addCommand('complexity', _buildComplexityParser());
+      ..addCommand('complexity', _buildComplexityParser())
+      ..addCommand('loc', _buildLocParser());
   }
 
   ArgParser _buildComplexityParser() {
@@ -74,11 +79,21 @@ class CliRunner {
     );
   }
 
+  ArgParser _buildLocParser() {
+    return ArgParser()..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage information for the loc command.',
+    );
+  }
+
   void _printUsage(ArgParser argParser) {
     print('Usage: dart splendid_code_quality.dart <command> [arguments]');
     print('');
     print('Available commands:');
     print('  complexity <file|directory>  Analyze cyclomatic complexity');
+    print('  loc <file|directory>         Analyze lines of code');
     print('');
     print('Global options:');
     print(argParser.usage);
@@ -88,6 +103,15 @@ class CliRunner {
     print('Usage: dart splendid_code_quality.dart complexity <file|directory>');
     print('');
     print('Analyzes cyclomatic complexity of Dart source files.');
+    print('');
+    print('Arguments:');
+    print('  <file|directory>  Path to a Dart file or directory to analyze');
+  }
+
+  void _printLocUsage() {
+    print('Usage: dart splendid_code_quality.dart loc <file|directory>');
+    print('');
+    print('Analyzes lines of code in Dart source files.');
     print('');
     print('Arguments:');
     print('  <file|directory>  Path to a Dart file or directory to analyze');
@@ -176,6 +200,105 @@ class CliRunner {
     print('Total files analyzed: ${dartFiles.length}');
     print('Average complexity: ${(totalComplexity / dartFiles.length).toStringAsFixed(1)}');
     print('Maximum complexity: $maxComplexity ($maxComplexityFile)');
+  }
+
+  int _handleLocCommand(ArgResults results) {
+    if (results.flag('help')) {
+      _printLocUsage();
+      return 0;
+    }
+
+    if (results.rest.isEmpty) {
+      print('Error: No file or directory specified.');
+      print('');
+      _printLocUsage();
+      return 1;
+    }
+
+    final String path = results.rest[0];
+    final FileSystemEntity entity = FileSystemEntity.typeSync(path) == FileSystemEntityType.directory
+        ? Directory(path)
+        : File(path);
+
+    if (!entity.existsSync()) {
+      print('Error: Path does not exist: $path');
+      return 1;
+    }
+
+    if (entity is File) {
+      _analyzeLocFile(entity);
+    } else if (entity is Directory) {
+      _analyzeLocDirectory(entity);
+    }
+
+    return 0;
+  }
+
+  void _analyzeLocFile(File file) {
+    if (!file.path.endsWith('.dart')) {
+      print('Error: File must be a Dart file (.dart extension)');
+      exit(1);
+    }
+
+    final String sourceCode = file.readAsStringSync();
+    final LocAnalyzer analyzer = LocAnalyzer();
+    final LocResult result = analyzer.analyze(sourceCode);
+
+    print('File: ${file.path}');
+    print('Total lines: ${result.totalLines}');
+    print('Code lines: ${result.codeLines}');
+    print('Comment lines: ${result.commentLines}');
+    print('Blank lines: ${result.blankLines}');
+  }
+
+  void _analyzeLocDirectory(Directory directory) {
+    final List<File> dartFiles = directory
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    if (dartFiles.isEmpty) {
+      print('No Dart files found in directory: ${directory.path}');
+      return;
+    }
+
+    print('Analyzing ${dartFiles.length} Dart file(s) in ${directory.path}');
+    print('');
+
+    final LocAnalyzer analyzer = LocAnalyzer();
+    int totalLines = 0;
+    int totalCodeLines = 0;
+    int totalCommentLines = 0;
+    int totalBlankLines = 0;
+    int maxCodeLines = 0;
+    String maxCodeLinesFile = '';
+
+    for (final File file in dartFiles) {
+      final String sourceCode = file.readAsStringSync();
+      final LocResult result = analyzer.analyze(sourceCode);
+
+      totalLines += result.totalLines;
+      totalCodeLines += result.codeLines;
+      totalCommentLines += result.commentLines;
+      totalBlankLines += result.blankLines;
+
+      if (result.codeLines > maxCodeLines) {
+        maxCodeLines = result.codeLines;
+        maxCodeLinesFile = file.path;
+      }
+
+      print('${file.path}: ${result.codeLines} code lines');
+    }
+
+    print('');
+    print('Total files analyzed: ${dartFiles.length}');
+    print('Total lines: $totalLines');
+    print('Total code lines: $totalCodeLines');
+    print('Total comment lines: $totalCommentLines');
+    print('Total blank lines: $totalBlankLines');
+    print('Average code lines per file: ${(totalCodeLines / dartFiles.length).toStringAsFixed(1)}');
+    print('Maximum code lines: $maxCodeLines ($maxCodeLinesFile)');
   }
 
   String _loadVersion() {
