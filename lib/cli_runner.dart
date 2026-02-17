@@ -4,8 +4,10 @@ import 'package:args/args.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'cognitive_complexity/cognitive_complexity_analyzer.dart';
 import 'cyclomatic_complexity/cyclomatic_complexity_analyzer.dart';
+import 'depth_of_inheritance/depth_of_inheritance_analyzer.dart';
 import 'halstead/halstead_analyzer.dart';
 import 'lines_of_code/loc_analyzer.dart';
+import 'report/report_generator.dart';
 
 /// Runs the Splendid Code Quality CLI tool.
 ///
@@ -49,6 +51,12 @@ class CliRunner {
       if (results.command?.name == 'halstead') {
         return _handleHalsteadCommand(results.command!);
       }
+      if (results.command?.name == 'inheritance') {
+        return _handleInheritanceCommand(results.command!);
+      }
+      if (results.command?.name == 'report') {
+        return await _handleReportCommand(results.command!);
+      }
 
       // No command provided
       _printUsage(argParser);
@@ -77,7 +85,9 @@ class CliRunner {
       ..addCommand('complexity', _buildComplexityParser())
       ..addCommand('loc', _buildLocParser())
       ..addCommand('cognitive', _buildCognitiveParser())
-      ..addCommand('halstead', _buildHalsteadParser());
+      ..addCommand('halstead', _buildHalsteadParser())
+      ..addCommand('inheritance', _buildInheritanceParser())
+      ..addCommand('report', _buildReportParser());
   }
 
   ArgParser _buildComplexityParser() {
@@ -116,6 +126,31 @@ class CliRunner {
     );
   }
 
+  ArgParser _buildInheritanceParser() {
+    return ArgParser()..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage information for the inheritance command.',
+    );
+  }
+
+  ArgParser _buildReportParser() {
+    return ArgParser()
+      ..addFlag(
+        'help',
+        abbr: 'h',
+        negatable: false,
+        help: 'Print usage information for the report command.',
+      )
+      ..addOption(
+        'output',
+        abbr: 'o',
+        defaultsTo: 'code_quality_report.html',
+        help: 'Output file path for the HTML report.',
+      );
+  }
+
   void _printUsage(ArgParser argParser) {
     print('Usage: dart splendid_code_quality.dart <command> [arguments]');
     print('');
@@ -123,7 +158,9 @@ class CliRunner {
     print('  complexity <file|directory>  Analyze cyclomatic complexity');
     print('  cognitive <file|directory>   Analyze cognitive complexity');
     print('  halstead <file|directory>    Analyze Halstead metrics');
+    print('  inheritance <file|directory> Analyze depth of inheritance');
     print('  loc <file|directory>         Analyze lines of code');
+    print('  report <directory>           Generate HTML quality report');
     print('');
     print('Global options:');
     print(argParser.usage);
@@ -165,6 +202,28 @@ class CliRunner {
     print('');
     print('Arguments:');
     print('  <file|directory>  Path to a Dart file or directory to analyze');
+  }
+
+  void _printInheritanceUsage() {
+    print('Usage: dart splendid_code_quality.dart inheritance <file|directory>');
+    print('');
+    print('Analyzes depth of inheritance in Dart source files.');
+    print('Measures how many levels deep class hierarchies extend.');
+    print('');
+    print('Arguments:');
+    print('  <file|directory>  Path to a Dart file or directory to analyze');
+  }
+
+  void _printReportUsage() {
+    print('Usage: dart splendid_code_quality.dart report <directory> [options]');
+    print('');
+    print('Generates an HTML report with all code quality metrics.');
+    print('');
+    print('Arguments:');
+    print('  <directory>  Path to a directory to analyze');
+    print('');
+    print('Options:');
+    print('  -o, --output  Output file path (default: code_quality_report.html)');
   }
 
   int _handleComplexityCommand(ArgResults results) {
@@ -540,5 +599,126 @@ class CliRunner {
     print('Total files analyzed: ${dartFiles.length}');
     print('Average volume: ${(totalVolume / dartFiles.length).toStringAsFixed(2)}');
     print('Maximum volume: ${maxVolume.toStringAsFixed(2)} ($maxVolumeFile)');
+  }
+
+  int _handleInheritanceCommand(ArgResults results) {
+    if (results.flag('help')) {
+      _printInheritanceUsage();
+      return 0;
+    }
+
+    if (results.rest.isEmpty) {
+      print('Error: No file or directory specified.');
+      print('');
+      _printInheritanceUsage();
+      return 1;
+    }
+
+    final String path = results.rest[0];
+    final FileSystemEntity entity = FileSystemEntity.typeSync(path) == FileSystemEntityType.directory
+        ? Directory(path)
+        : File(path);
+
+    if (!entity.existsSync()) {
+      print('Error: Path does not exist: $path');
+      return 1;
+    }
+
+    if (entity is File) {
+      _analyzeInheritanceFile(entity);
+    } else if (entity is Directory) {
+      _analyzeInheritanceDirectory(entity);
+    }
+
+    return 0;
+  }
+
+  void _analyzeInheritanceFile(File file) {
+    if (!file.path.endsWith('.dart')) {
+      print('Error: File must be a Dart file (.dart extension)');
+      exit(1);
+    }
+
+    final String sourceCode = file.readAsStringSync();
+    final DepthOfInheritanceAnalyzer analyzer = DepthOfInheritanceAnalyzer();
+    final InheritanceResult result = analyzer.analyze(sourceCode);
+
+    print('File: ${file.path}');
+    print('');
+    print('Maximum depth: ${result.maxDepth}');
+    print('');
+
+    if (result.classDepths.isEmpty) {
+      print('No classes found');
+    } else {
+      print('Classes:');
+      for (final entry in result.classDepths.entries) {
+        print('  ${entry.key}: depth ${entry.value}');
+      }
+    }
+  }
+
+  void _analyzeInheritanceDirectory(Directory directory) {
+    final List<File> dartFiles = directory
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    if (dartFiles.isEmpty) {
+      print('No Dart files found in directory: ${directory.path}');
+      return;
+    }
+
+    print('Analyzing ${dartFiles.length} Dart file(s) in ${directory.path}');
+    print('');
+
+    final DepthOfInheritanceAnalyzer analyzer = DepthOfInheritanceAnalyzer();
+    int overallMaxDepth = 0;
+    String maxDepthFile = '';
+    int totalClasses = 0;
+
+    for (final File file in dartFiles) {
+      final String sourceCode = file.readAsStringSync();
+      final InheritanceResult result = analyzer.analyze(sourceCode);
+
+      if (result.classDepths.isNotEmpty) {
+        totalClasses += result.classDepths.length;
+
+        if (result.maxDepth > overallMaxDepth) {
+          overallMaxDepth = result.maxDepth;
+          maxDepthFile = file.path;
+        }
+
+        print('${file.path}: max depth ${result.maxDepth}');
+      }
+    }
+
+    print('');
+    print('Total files analyzed: ${dartFiles.length}');
+    print('Total classes found: $totalClasses');
+    print('Maximum depth: $overallMaxDepth ($maxDepthFile)');
+  }
+
+  Future<int> _handleReportCommand(ArgResults results) async {
+    if (results.flag('help')) {
+      _printReportUsage();
+      return 0;
+    }
+
+    if (results.rest.isEmpty) {
+      print('Error: No directory specified.');
+      print('');
+      _printReportUsage();
+      return 1;
+    }
+
+    final String directoryPath = results.rest[0];
+    final String outputPath = results.option('output') as String;
+
+    final ReportGenerator generator = ReportGenerator();
+    final bool success = await generator.generate(directoryPath, outputPath);
+
+    return success ? 0 : 1;
   }
 }

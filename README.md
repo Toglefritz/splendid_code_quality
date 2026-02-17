@@ -59,6 +59,23 @@ Halstead metrics measure program vocabulary and volume based on the number of un
 - Track volume trends to identify areas where abstractions could reduce complexity
 - Halstead metrics are often used as components in composite metrics like Maintainability Index
 
+### Depth of Inheritance
+
+Depth of inheritance measures how many levels deep a class hierarchy extends. Each level of inheritance adds to the depth, making the codebase harder to understand as changes to base classes can have cascading effects throughout the hierarchy.
+
+**How to use this metric:**
+- Deep hierarchies (typically >5 levels) are difficult to understand and maintain
+- Each inheritance level adds cognitive load when reasoning about class behavior
+- Prefer composition over deep inheritance to reduce coupling
+- Identify overly complex hierarchies that could be flattened or refactored
+- Classes with no explicit superclass or extending Object have depth 0
+
+**When inheritance depth is problematic:**
+- Changes to base classes require understanding all derived classes
+- Testing becomes more complex as you need to consider the entire hierarchy
+- New developers struggle to understand the full behavior of derived classes
+- Bug fixes in base classes can have unexpected effects on subclasses
+
 ### Lines of Code (LOC)
 
 Lines of Code measures the size of code units (functions, classes, files) by counting non-blank, non-comment source lines. This metric provides insight into code volume and potential maintenance burden.
