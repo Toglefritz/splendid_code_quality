@@ -25,6 +25,22 @@ Cyclomatic complexity measures the number of independent paths through a program
 - Set complexity thresholds in CI/CD pipelines to prevent overly complex code from being merged
 - Track complexity trends over time to ensure code maintainability doesn't degrade
 
+### Cognitive Complexity
+
+Cognitive complexity measures how difficult code is to understand by penalizing nested structures and control flow breaks more heavily than simple decision points. Unlike cyclomatic complexity which treats all decision points equally, cognitive complexity focuses on human readability by adding extra weight for nesting depth.
+
+**How to use this metric:**
+- Functions with high cognitive complexity (typically >15) are difficult for developers to understand and reason about
+- Nested control structures contribute more to cognitive load than sequential decisions
+- Refactor deeply nested code by extracting inner logic into well-named helper functions
+- Use this metric alongside cyclomatic complexity for a complete picture of code maintainability
+
+**What increases cognitive complexity:**
+- Control structures (if, for, while, switch) add 1 + current nesting depth
+- Nested structures are penalized more heavily (each level adds to the score)
+- Control flow breaks (break, continue, return in nested contexts, throw) add 1
+- Sequences of logical operators (&&, ||) add 1
+
 ### Lines of Code (LOC)
 
 Lines of Code measures the size of code units (functions, classes, files) by counting non-blank, non-comment source lines. This metric provides insight into code volume and potential maintenance burden.

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
+import 'cognitive_complexity/cognitive_complexity_analyzer.dart';
 import 'cyclomatic_complexity/cyclomatic_complexity_analyzer.dart';
 import 'lines_of_code/loc_analyzer.dart';
 
@@ -41,6 +42,9 @@ class CliRunner {
       if (results.command?.name == 'loc') {
         return _handleLocCommand(results.command!);
       }
+      if (results.command?.name == 'cognitive') {
+        return _handleCognitiveCommand(results.command!);
+      }
 
       // No command provided
       _printUsage(argParser);
@@ -67,7 +71,8 @@ class CliRunner {
         help: 'Print the tool version.',
       )
       ..addCommand('complexity', _buildComplexityParser())
-      ..addCommand('loc', _buildLocParser());
+      ..addCommand('loc', _buildLocParser())
+      ..addCommand('cognitive', _buildCognitiveParser());
   }
 
   ArgParser _buildComplexityParser() {
@@ -88,11 +93,21 @@ class CliRunner {
     );
   }
 
+  ArgParser _buildCognitiveParser() {
+    return ArgParser()..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage information for the cognitive command.',
+    );
+  }
+
   void _printUsage(ArgParser argParser) {
     print('Usage: dart splendid_code_quality.dart <command> [arguments]');
     print('');
     print('Available commands:');
     print('  complexity <file|directory>  Analyze cyclomatic complexity');
+    print('  cognitive <file|directory>   Analyze cognitive complexity');
     print('  loc <file|directory>         Analyze lines of code');
     print('');
     print('Global options:');
@@ -112,6 +127,16 @@ class CliRunner {
     print('Usage: dart splendid_code_quality.dart loc <file|directory>');
     print('');
     print('Analyzes lines of code in Dart source files.');
+    print('');
+    print('Arguments:');
+    print('  <file|directory>  Path to a Dart file or directory to analyze');
+  }
+
+  void _printCognitiveUsage() {
+    print('Usage: dart splendid_code_quality.dart cognitive <file|directory>');
+    print('');
+    print('Analyzes cognitive complexity of Dart source files.');
+    print('Cognitive complexity measures how difficult code is to understand.');
     print('');
     print('Arguments:');
     print('  <file|directory>  Path to a Dart file or directory to analyze');
@@ -310,5 +335,90 @@ class CliRunner {
     } catch (e) {
       return 'unknown';
     }
+  }
+
+  int _handleCognitiveCommand(ArgResults results) {
+    if (results.flag('help')) {
+      _printCognitiveUsage();
+      return 0;
+    }
+
+    if (results.rest.isEmpty) {
+      print('Error: No file or directory specified.');
+      print('');
+      _printCognitiveUsage();
+      return 1;
+    }
+
+    final String path = results.rest[0];
+    final FileSystemEntity entity = FileSystemEntity.typeSync(path) == FileSystemEntityType.directory
+        ? Directory(path)
+        : File(path);
+
+    if (!entity.existsSync()) {
+      print('Error: Path does not exist: $path');
+      return 1;
+    }
+
+    if (entity is File) {
+      _analyzeCognitiveFile(entity);
+    } else if (entity is Directory) {
+      _analyzeCognitiveDirectory(entity);
+    }
+
+    return 0;
+  }
+
+  void _analyzeCognitiveFile(File file) {
+    if (!file.path.endsWith('.dart')) {
+      print('Error: File must be a Dart file (.dart extension)');
+      exit(1);
+    }
+
+    final String sourceCode = file.readAsStringSync();
+    final CognitiveComplexityAnalyzer analyzer = CognitiveComplexityAnalyzer();
+    final CognitiveResult result = analyzer.analyze(sourceCode);
+
+    print('File: ${file.path}');
+    print('Cognitive Complexity: ${result.complexity}');
+  }
+
+  void _analyzeCognitiveDirectory(Directory directory) {
+    final List<File> dartFiles = directory
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    if (dartFiles.isEmpty) {
+      print('No Dart files found in directory: ${directory.path}');
+      return;
+    }
+
+    print('Analyzing ${dartFiles.length} Dart file(s) in ${directory.path}');
+    print('');
+
+    final CognitiveComplexityAnalyzer analyzer = CognitiveComplexityAnalyzer();
+    int totalComplexity = 0;
+    int maxComplexity = 0;
+    String maxComplexityFile = '';
+
+    for (final File file in dartFiles) {
+      final String sourceCode = file.readAsStringSync();
+      final CognitiveResult result = analyzer.analyze(sourceCode);
+      totalComplexity += result.complexity;
+
+      if (result.complexity > maxComplexity) {
+        maxComplexity = result.complexity;
+        maxComplexityFile = file.path;
+      }
+
+      print('${file.path}: ${result.complexity}');
+    }
+
+    print('');
+    print('Total files analyzed: ${dartFiles.length}');
+    print('Average complexity: ${(totalComplexity / dartFiles.length).toStringAsFixed(1)}');
+    print('Maximum complexity: $maxComplexity ($maxComplexityFile)');
   }
 }
