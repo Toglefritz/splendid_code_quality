@@ -15,6 +15,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bricks => 'Bricks';
 
   @override
+  String get celebrate => 'Celebrate';
+
+  @override
   String get lamp => 'Lamp';
 
   @override

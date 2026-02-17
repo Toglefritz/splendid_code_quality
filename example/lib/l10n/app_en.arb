@@ -7,6 +7,10 @@
   "@bricks": {
     "description": "Label for the 'bricks' screen on the bottom navigation"
   },
+  "celebrate": "Celebrate",
+  "@celebrate": {
+    "description": "Label for the 'celebrate' screen on the bottom navigation"
+  },
   "lamp": "Lamp",
   "@lamp": {
     "description": "Label for the 'lamp' screen on the bottom navigation"

@@ -41,6 +41,24 @@ Cognitive complexity measures how difficult code is to understand by penalizing 
 - Control flow breaks (break, continue, return in nested contexts, throw) add 1
 - Sequences of logical operators (&&, ||) add 1
 
+### Halstead Metrics
+
+Halstead metrics measure program vocabulary and volume based on the number of unique and total operators and operands in the source code. These metrics provide insight into program size, comprehension difficulty, and development effort.
+
+**Key Halstead measurements:**
+- Vocabulary (n): Total number of unique operators and operands
+- Length (N): Total count of all operators and operands
+- Volume (V): Program size measured in bits, calculated as N × log₂(n)
+- Difficulty (D): How hard the program is to write or understand
+- Effort (E): Mental effort required to develop or understand the code
+
+**How to use this metric:**
+- High volume (typically >1000) indicates large, complex implementations that may need decomposition
+- Volume grows with both code length and vocabulary richness
+- Use volume alongside LOC to distinguish between verbose and concise code
+- Track volume trends to identify areas where abstractions could reduce complexity
+- Halstead metrics are often used as components in composite metrics like Maintainability Index
+
 ### Lines of Code (LOC)
 
 Lines of Code measures the size of code units (functions, classes, files) by counting non-blank, non-comment source lines. This metric provides insight into code volume and potential maintenance burden.

@@ -4,6 +4,7 @@ import 'package:args/args.dart';
 import 'package:pubspec_parse/pubspec_parse.dart';
 import 'cognitive_complexity/cognitive_complexity_analyzer.dart';
 import 'cyclomatic_complexity/cyclomatic_complexity_analyzer.dart';
+import 'halstead/halstead_analyzer.dart';
 import 'lines_of_code/loc_analyzer.dart';
 
 /// Runs the Splendid Code Quality CLI tool.
@@ -45,6 +46,9 @@ class CliRunner {
       if (results.command?.name == 'cognitive') {
         return _handleCognitiveCommand(results.command!);
       }
+      if (results.command?.name == 'halstead') {
+        return _handleHalsteadCommand(results.command!);
+      }
 
       // No command provided
       _printUsage(argParser);
@@ -72,7 +76,8 @@ class CliRunner {
       )
       ..addCommand('complexity', _buildComplexityParser())
       ..addCommand('loc', _buildLocParser())
-      ..addCommand('cognitive', _buildCognitiveParser());
+      ..addCommand('cognitive', _buildCognitiveParser())
+      ..addCommand('halstead', _buildHalsteadParser());
   }
 
   ArgParser _buildComplexityParser() {
@@ -102,12 +107,22 @@ class CliRunner {
     );
   }
 
+  ArgParser _buildHalsteadParser() {
+    return ArgParser()..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage information for the halstead command.',
+    );
+  }
+
   void _printUsage(ArgParser argParser) {
     print('Usage: dart splendid_code_quality.dart <command> [arguments]');
     print('');
     print('Available commands:');
     print('  complexity <file|directory>  Analyze cyclomatic complexity');
     print('  cognitive <file|directory>   Analyze cognitive complexity');
+    print('  halstead <file|directory>    Analyze Halstead metrics');
     print('  loc <file|directory>         Analyze lines of code');
     print('');
     print('Global options:');
@@ -137,6 +152,16 @@ class CliRunner {
     print('');
     print('Analyzes cognitive complexity of Dart source files.');
     print('Cognitive complexity measures how difficult code is to understand.');
+    print('');
+    print('Arguments:');
+    print('  <file|directory>  Path to a Dart file or directory to analyze');
+  }
+
+  void _printHalsteadUsage() {
+    print('Usage: dart splendid_code_quality.dart halstead <file|directory>');
+    print('');
+    print('Analyzes Halstead complexity metrics of Dart source files.');
+    print('Halstead metrics measure program vocabulary and volume.');
     print('');
     print('Arguments:');
     print('  <file|directory>  Path to a Dart file or directory to analyze');
@@ -420,5 +445,100 @@ class CliRunner {
     print('Total files analyzed: ${dartFiles.length}');
     print('Average complexity: ${(totalComplexity / dartFiles.length).toStringAsFixed(1)}');
     print('Maximum complexity: $maxComplexity ($maxComplexityFile)');
+  }
+
+  int _handleHalsteadCommand(ArgResults results) {
+    if (results.flag('help')) {
+      _printHalsteadUsage();
+      return 0;
+    }
+
+    if (results.rest.isEmpty) {
+      print('Error: No file or directory specified.');
+      print('');
+      _printHalsteadUsage();
+      return 1;
+    }
+
+    final String path = results.rest[0];
+    final FileSystemEntity entity = FileSystemEntity.typeSync(path) == FileSystemEntityType.directory
+        ? Directory(path)
+        : File(path);
+
+    if (!entity.existsSync()) {
+      print('Error: Path does not exist: $path');
+      return 1;
+    }
+
+    if (entity is File) {
+      _analyzeHalsteadFile(entity);
+    } else if (entity is Directory) {
+      _analyzeHalsteadDirectory(entity);
+    }
+
+    return 0;
+  }
+
+  void _analyzeHalsteadFile(File file) {
+    if (!file.path.endsWith('.dart')) {
+      print('Error: File must be a Dart file (.dart extension)');
+      exit(1);
+    }
+
+    final String sourceCode = file.readAsStringSync();
+    final HalsteadAnalyzer analyzer = HalsteadAnalyzer();
+    final HalsteadResult result = analyzer.analyze(sourceCode);
+
+    print('File: ${file.path}');
+    print('');
+    print('Unique operators (n1): ${result.uniqueOperators}');
+    print('Unique operands (n2): ${result.uniqueOperands}');
+    print('Total operators (N1): ${result.totalOperators}');
+    print('Total operands (N2): ${result.totalOperands}');
+    print('');
+    print('Vocabulary (n): ${result.vocabulary}');
+    print('Length (N): ${result.length}');
+    print('Volume (V): ${result.volume.toStringAsFixed(2)}');
+    print('Difficulty (D): ${result.difficulty.toStringAsFixed(2)}');
+    print('Effort (E): ${result.effort.toStringAsFixed(2)}');
+  }
+
+  void _analyzeHalsteadDirectory(Directory directory) {
+    final List<File> dartFiles = directory
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    if (dartFiles.isEmpty) {
+      print('No Dart files found in directory: ${directory.path}');
+      return;
+    }
+
+    print('Analyzing ${dartFiles.length} Dart file(s) in ${directory.path}');
+    print('');
+
+    final HalsteadAnalyzer analyzer = HalsteadAnalyzer();
+    double totalVolume = 0;
+    double maxVolume = 0;
+    String maxVolumeFile = '';
+
+    for (final File file in dartFiles) {
+      final String sourceCode = file.readAsStringSync();
+      final HalsteadResult result = analyzer.analyze(sourceCode);
+      totalVolume += result.volume;
+
+      if (result.volume > maxVolume) {
+        maxVolume = result.volume;
+        maxVolumeFile = file.path;
+      }
+
+      print('${file.path}: ${result.volume.toStringAsFixed(2)}');
+    }
+
+    print('');
+    print('Total files analyzed: ${dartFiles.length}');
+    print('Average volume: ${(totalVolume / dartFiles.length).toStringAsFixed(2)}');
+    print('Maximum volume: ${maxVolume.toStringAsFixed(2)} ($maxVolumeFile)');
   }
 }
