@@ -13,6 +13,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
+  material_symbols_icons: ^4.2906.0
 
 dev_dependencies:
   flutter_test:

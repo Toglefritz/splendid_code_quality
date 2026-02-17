@@ -3,6 +3,14 @@
   "@appTitle": {
     "description": "The title of the application"
   },
+  "bricks": "Bricks",
+  "@bricks": {
+    "description": "Label for the 'bricks' screen on the bottom navigation"
+  },
+  "lamp": "Lamp",
+  "@lamp": {
+    "description": "Label for the 'lamp' screen on the bottom navigation"
+  },
   "lampOff": "OFF",
   "@lampOff": {
     "description": "Label for the lamp switch when it is in the off position"

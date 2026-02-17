@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/material_symbols_icons.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../../theme/insets.dart';
+import '../bricks/bricks_route.dart';
+import '../lamp/lamp_route.dart';
+import '../placeholder/placeholder_route.dart';
 import 'home_controller.dart';
 
-/// View widget for the home screen that handles UI presentation.
+/// View widget for the home screen wrapper that handles UI presentation.
 ///
-/// This StatelessWidget receives the controller as a parameter and uses it to access state and trigger actions. The
-/// view contains no business logic and is purely declarative.
+/// This [StatelessWidget] provides the main navigation structure with a bottom navigation bar and an [IndexedStack] to
+/// switch between screens.
 class HomeView extends StatelessWidget {
   /// Creates the home view with the required controller.
   const HomeView(this.state, {super.key});
 
-  /// Controller instance that manages state and business logic.
-  ///
-  /// Used to access the current lamp state and trigger toggle actions.
+  /// Controller instance that manages navigation state.
   final HomeController state;
 
   @override
@@ -24,53 +25,31 @@ class HomeView extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(AppLocalizations.of(context)!.appTitle),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // Lamp icon that changes appearance based on state. When the lamp is on, it displays a bright yellow bulb
-            // with glow effect. When off, it displays a dim gray bulb without glow.
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: state.isLampOn
-                    ? [
-                        BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 10,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Icon(
-                Icons.lightbulb,
-                size: 80,
-                color: state.isLampOn ? Colors.amber : Colors.grey,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: Insets.medium),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(AppLocalizations.of(context)!.lampOff),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Insets.small),
-                    child: Switch(
-                      value: state.isLampOn,
-                      onChanged: (bool value) => state.toggleLamp(value: value),
-                      activeThumbColor: Colors.amber,
-                    ),
-                  ),
-                  Text(AppLocalizations.of(context)!.lampOn),
-                ],
-              ),
-            ),
-          ],
-        ),
+      body: IndexedStack(
+        index: state.currentIndex,
+        children: const [
+          LampRoute(),
+          BricksRoute(),
+          PlaceholderRoute(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: state.currentIndex,
+        onTap: state.onTabTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.lightbulb_outline),
+            label: AppLocalizations.of(context)!.lamp,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Symbols.brick),
+            label: AppLocalizations.of(context)!.bricks,
+          ),
+          const BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Screen 3',
+          ),
+        ],
       ),
     );
   }
