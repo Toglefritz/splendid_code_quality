@@ -13,6 +13,19 @@ Splendid Code Quality helps software engineers understand and improve the qualit
 - **Clear Reporting**: Generate easy-to-understand analysis reports with aesthetic design
 - **CI/CD Integration**: Use in automated pipelines for continuous quality monitoring
 
+## HTML Report
+
+Splendid Code Quality generates HTML reports that provide an at-a-glance view of your codebase health. The reports feature:
+
+- **Overview Dashboard**: Quick summary of total files analyzed, lines of code, and files with quality issues
+- **Metrics Summary**: Color-coded cards showing average values for each quality metric (green = good, yellow = warning, red = critical)
+- **Problem Hotspots**: Top 10 files that need attention, ranked by severity of quality issues
+- **Detailed File List**: Complete table of all analyzed files with individual metric scores
+
+![Report Summary](docs/report_summary.png)
+
+The report makes it easy to identify which areas of your codebase need attention and track quality improvements over time.
+
 ## Supported Quality Metrics
 
 ### Cyclomatic Complexity
