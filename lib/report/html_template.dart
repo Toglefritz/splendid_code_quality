@@ -18,6 +18,9 @@ class _HtmlTemplate {
     </style>
 </head>
 <body>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+        <span class="theme-icon">🌙</span>
+    </button>
     <div class="container">
         <header>
             <h1>Code Quality Report</h1>
@@ -29,6 +32,9 @@ class _HtmlTemplate {
         ${_generateHotspotsSection(metrics)}
         ${_generateFileListSection(metrics)}
     </div>
+    <script>
+        ${_generateThemeScript()}
+    </script>
 </body>
 </html>
 ''';
@@ -252,6 +258,126 @@ class _HtmlTemplate {
             font-size: 0.9em;
             color: #2c3e50;
         }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .theme-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* Dark theme styles */
+        body.dark-theme {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        body.dark-theme .theme-toggle {
+            background: #2d2d2d;
+        }
+
+        body.dark-theme header,
+        body.dark-theme .section {
+            background: #2d2d2d;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        body.dark-theme h1,
+        body.dark-theme h2,
+        body.dark-theme .metric-name,
+        body.dark-theme .hotspot-file,
+        body.dark-theme .file-path {
+            color: #e0e0e0;
+        }
+
+        body.dark-theme .subtitle,
+        body.dark-theme .stat-label,
+        body.dark-theme .metric-label,
+        body.dark-theme .metric-stats,
+        body.dark-theme .metric-threshold,
+        body.dark-theme .hotspot-metrics {
+            color: #a0a0a0;
+        }
+
+        body.dark-theme .stat-card {
+            background: #1a1a1a;
+            border-left-color: #4a9eff;
+        }
+
+        body.dark-theme .stat-value {
+            color: #e0e0e0;
+        }
+
+        body.dark-theme .metric-card.good {
+            background: linear-gradient(135deg, #1a4d2e 0%, #2d5f3f 100%);
+        }
+
+        body.dark-theme .metric-card.warning {
+            background: linear-gradient(135deg, #5c4a1a 0%, #6e5a2d 100%);
+        }
+
+        body.dark-theme .metric-card.critical {
+            background: linear-gradient(135deg, #5c1a1a 0%, #6e2d2d 100%);
+        }
+
+        body.dark-theme .metric-value {
+            color: #ffffff;
+        }
+
+        body.dark-theme .hotspot-item {
+            background: #1a1a1a;
+            border-left-color: #e74c3c;
+        }
+
+        body.dark-theme .file-table th {
+            background: #1a1a1a;
+            border-bottom-color: #404040;
+            color: #ffffff;
+        }
+
+        body.dark-theme .file-table td {
+            border-bottom-color: #404040;
+        }
+
+        body.dark-theme .file-table tr:hover {
+            background: #1a1a1a;
+        }
+
+        body.dark-theme .status-badge.good {
+            background: #1a4d2e;
+            color: #7bed9f;
+        }
+
+        body.dark-theme .status-badge.warning {
+            background: #5c4a1a;
+            color: #ffd93d;
+        }
+
+        body.dark-theme .status-badge.critical {
+            background: #5c1a1a;
+            color: #ff6b6b;
+        }
     ''';
   }
 
@@ -465,5 +591,30 @@ class _HtmlTemplate {
     if (metrics.depthOfInheritanceStatus == 'critical') score += 3;
     if (metrics.depthOfInheritanceStatus == 'warning') score += 1;
     return score;
+  }
+
+  /// Generates JavaScript for theme toggle functionality.
+  static String _generateThemeScript() {
+    return '''
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = themeToggle.querySelector('.theme-icon');
+        const body = document.body;
+
+        // Load saved theme preference
+        const savedTheme = localStorage.getItem('code-quality-theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-theme');
+            themeIcon.textContent = '☀️';
+        }
+
+        // Toggle theme on button click
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-theme');
+            const isDark = body.classList.contains('dark-theme');
+            themeIcon.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('code-quality-theme', isDark ? 'dark' : 'light');
+        });
+    ''';
   }
 }
