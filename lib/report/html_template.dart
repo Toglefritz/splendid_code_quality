@@ -123,39 +123,59 @@ class _HtmlTemplate {
         }
 
         .metric-card {
-            background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .metric-card.good {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        }
+
+        .metric-card.warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        }
+
+        .metric-card.critical {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
         }
 
         .metric-name {
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             color: #2c3e50;
+            font-size: 1.1em;
         }
 
-        .metric-bar {
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 8px;
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
         }
 
-        .metric-fill {
-            height: 100%;
-            transition: width 0.3s ease;
+        .metric-label {
+            font-size: 0.85em;
+            color: #5a6c7d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
-
-        .metric-fill.good { background: #27ae60; }
-        .metric-fill.warning { background: #f39c12; }
-        .metric-fill.critical { background: #e74c3c; }
 
         .metric-stats {
             display: flex;
             justify-content: space-between;
-            font-size: 0.85em;
-            color: #7f8c8d;
+            font-size: 0.9em;
+            color: #5a6c7d;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .metric-threshold {
+            font-size: 0.8em;
+            color: #5a6c7d;
+            font-style: italic;
         }
 
         .hotspots-list {
@@ -278,76 +298,68 @@ class _HtmlTemplate {
 
   static String _generateMetricCard(String name, num avg, num max, num threshold) {
     String status;
-    double percentage;
+    String goodThreshold;
 
-    // Determine status based on max value and appropriate thresholds
+    // Determine status based on average value and appropriate thresholds
     if (name.contains('Cyclomatic')) {
-      if (max <= 10) {
+      goodThreshold = '≤10';
+      if (avg <= 10) {
         status = 'good';
-        percentage = (max / 10 * 50).clamp(0, 50);
-      } else if (max <= 20) {
+      } else if (avg <= 20) {
         status = 'warning';
-        percentage = 50 + ((max - 10) / 10 * 30);
       } else {
         status = 'critical';
-        percentage = 80 + ((max - 20) / 20 * 20).clamp(0, 20);
       }
     } else if (name.contains('Cognitive')) {
-      if (max <= 15) {
+      goodThreshold = '≤15';
+      if (avg <= 15) {
         status = 'good';
-        percentage = (max / 15 * 50).clamp(0, 50);
-      } else if (max <= 25) {
+      } else if (avg <= 25) {
         status = 'warning';
-        percentage = 50 + ((max - 15) / 10 * 30);
       } else {
         status = 'critical';
-        percentage = 80 + ((max - 25) / 25 * 20).clamp(0, 20);
       }
     } else if (name.contains('Lines of Code')) {
-      if (max <= 200) {
+      goodThreshold = '≤200';
+      if (avg <= 200) {
         status = 'good';
-        percentage = (max / 200 * 50).clamp(0, 50);
-      } else if (max <= 500) {
+      } else if (avg <= 500) {
         status = 'warning';
-        percentage = 50 + ((max - 200) / 300 * 30);
       } else {
         status = 'critical';
-        percentage = 80 + ((max - 500) / 500 * 20).clamp(0, 20);
       }
     } else if (name.contains('Halstead')) {
-      if (max <= 1000) {
+      goodThreshold = '≤1000';
+      if (avg <= 1000) {
         status = 'good';
-        percentage = (max / 1000 * 50).clamp(0, 50);
-      } else if (max <= 2000) {
+      } else if (avg <= 2000) {
         status = 'warning';
-        percentage = 50 + ((max - 1000) / 1000 * 30);
       } else {
         status = 'critical';
-        percentage = 80 + ((max - 2000) / 2000 * 20).clamp(0, 20);
       }
     } else {
       // Depth of Inheritance
-      if (max <= 2) {
+      goodThreshold = '≤2';
+      if (avg <= 2) {
         status = 'good';
-        percentage = (max / 2 * 50).clamp(0, 50);
-      } else if (max <= 4) {
+      } else if (avg <= 4) {
         status = 'warning';
-        percentage = 50 + ((max - 2) / 2 * 30);
       } else {
         status = 'critical';
-        percentage = 80 + ((max - 4) / 4 * 20).clamp(0, 20);
       }
     }
 
+    final String avgDisplay = avg is int ? avg.toString() : avg.toStringAsFixed(1);
+    final String maxDisplay = max is int ? max.toString() : max.toStringAsFixed(1);
+
     return '''
-        <div class="metric-card">
+        <div class="metric-card $status">
             <div class="metric-name">$name</div>
-            <div class="metric-bar">
-                <div class="metric-fill $status" style="width: ${percentage.toStringAsFixed(0)}%"></div>
-            </div>
+            <div class="metric-label">Average</div>
+            <div class="metric-value">$avgDisplay</div>
             <div class="metric-stats">
-                <span>Avg: ${avg is int ? avg : avg.toStringAsFixed(1)}</span>
-                <span>Max: ${max is int ? max : max.toStringAsFixed(1)}</span>
+                <span>Max: $maxDisplay</span>
+                <span>Good: $goodThreshold</span>
             </div>
         </div>
     ''';
@@ -454,38 +466,4 @@ class _HtmlTemplate {
     if (metrics.depthOfInheritanceStatus == 'warning') score += 1;
     return score;
   }
-}
-
-/// Statistics calculated from file metrics.
-class _ReportStats {
-  _ReportStats(List<FileMetrics> metrics)
-    : totalFiles = metrics.length,
-      totalLinesOfCode = metrics.fold(0, (sum, m) => sum + m.linesOfCode),
-      filesWithIssues = metrics.where((m) => m.overallStatus != 'good').length,
-      criticalFiles = metrics.where((m) => m.overallStatus == 'critical').length,
-      avgCyclomaticComplexity = metrics.fold(0, (sum, m) => sum + m.cyclomaticComplexity) / metrics.length,
-      maxCyclomaticComplexity = metrics.map((m) => m.cyclomaticComplexity).reduce((a, b) => a > b ? a : b),
-      avgCognitiveComplexity = metrics.fold(0, (sum, m) => sum + m.cognitiveComplexity) / metrics.length,
-      maxCognitiveComplexity = metrics.map((m) => m.cognitiveComplexity).reduce((a, b) => a > b ? a : b),
-      avgLinesOfCode = metrics.fold(0, (sum, m) => sum + m.linesOfCode) / metrics.length,
-      maxLinesOfCode = metrics.map((m) => m.linesOfCode).reduce((a, b) => a > b ? a : b),
-      avgHalsteadVolume = metrics.fold(0.0, (sum, m) => sum + m.halsteadVolume) / metrics.length,
-      maxHalsteadVolume = metrics.map((m) => m.halsteadVolume).reduce((a, b) => a > b ? a : b),
-      avgDepthOfInheritance = metrics.fold(0, (sum, m) => sum + m.depthOfInheritance) / metrics.length,
-      maxDepthOfInheritance = metrics.map((m) => m.depthOfInheritance).reduce((a, b) => a > b ? a : b);
-
-  final int totalFiles;
-  final int totalLinesOfCode;
-  final int filesWithIssues;
-  final int criticalFiles;
-  final double avgCyclomaticComplexity;
-  final int maxCyclomaticComplexity;
-  final double avgCognitiveComplexity;
-  final int maxCognitiveComplexity;
-  final double avgLinesOfCode;
-  final int maxLinesOfCode;
-  final double avgHalsteadVolume;
-  final double maxHalsteadVolume;
-  final double avgDepthOfInheritance;
-  final int maxDepthOfInheritance;
 }

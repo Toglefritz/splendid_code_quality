@@ -10,6 +10,7 @@ import '../lines_of_code/loc_analyzer.dart';
 
 part 'file_metrics.dart';
 part 'html_template.dart';
+part 'report_stats.dart';
 
 /// Generates HTML reports summarizing code quality metrics across a codebase.
 ///
