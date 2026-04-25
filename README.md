@@ -26,6 +26,68 @@ Splendid Code Quality generates HTML reports that provide an at-a-glance view of
 
 The report makes it easy to identify which areas of your codebase need attention and track quality improvements over time.
 
+## Usage
+
+All commands accept a path to a single Dart file or a directory (analyzed recursively).
+
+```bash
+dart run splendid_code_quality <command> <file|directory>
+```
+
+### Cyclomatic Complexity
+
+```bash
+dart run splendid_code_quality complexity lib/
+dart run splendid_code_quality complexity lib/src/my_file.dart
+```
+
+### Cognitive Complexity
+
+```bash
+dart run splendid_code_quality cognitive lib/
+dart run splendid_code_quality cognitive lib/src/my_file.dart
+```
+
+### Halstead Metrics
+
+```bash
+dart run splendid_code_quality halstead lib/
+dart run splendid_code_quality halstead lib/src/my_file.dart
+```
+
+### Depth of Inheritance
+
+```bash
+dart run splendid_code_quality inheritance lib/
+dart run splendid_code_quality inheritance lib/src/my_file.dart
+```
+
+### Lines of Code
+
+```bash
+dart run splendid_code_quality loc lib/
+dart run splendid_code_quality loc lib/src/my_file.dart
+```
+
+### HTML Report (all metrics)
+
+Generates a combined HTML report covering every metric:
+
+```bash
+dart run splendid_code_quality report lib/
+dart run splendid_code_quality report lib/ --output my_report.html
+```
+
+The output path defaults to `code_quality_report.html`. Use `-o` / `--output` to customize it.
+
+### Help & Version
+
+```bash
+dart run splendid_code_quality --help
+dart run splendid_code_quality --version
+dart run splendid_code_quality complexity --help
+```
+
 ## Supported Quality Metrics
 
 ### Cyclomatic Complexity

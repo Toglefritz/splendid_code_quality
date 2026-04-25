@@ -3,6 +3,9 @@ description: A Dart CLI tool for analyzing and measuring code quality using indu
 version: 1.0.0
 repository: https://github.com/Toglefritz/splendid_code_quality
 
+executables:
+  splendid_code_quality: splendid_code_quality
+
 environment:
   sdk: ^3.10.7
 
