@@ -22,7 +22,7 @@ Splendid Code Quality generates HTML reports that provide an at-a-glance view of
 - **Problem Hotspots**: Top 10 files that need attention, ranked by severity of quality issues
 - **Detailed File List**: Complete table of all analyzed files with individual metric scores
 
-![Report Summary](docs/report_summary.png)
+![Report Summary](doc/report_summary.png)
 
 The report makes it easy to identify which areas of your codebase need attention and track quality improvements over time.
 
