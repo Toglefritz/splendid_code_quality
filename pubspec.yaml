@@ -1,12 +1,11 @@
 name: splendid_code_quality
 description: A Dart CLI tool for analyzing and measuring code quality using industry-standard metrics.
-version: 0.0.1
-# repository: https://github.com/my_org/my_repo
+version: 1.0.0
+repository: https://github.com/Toglefritz/splendid_code_quality
 
 environment:
   sdk: ^3.10.7
 
-# Add regular dependencies here.
 dependencies:
   analyzer: ^6.0.0
   args: ^2.7.0
