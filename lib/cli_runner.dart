@@ -714,7 +714,7 @@ class CliRunner {
     }
 
     final String directoryPath = results.rest[0];
-    final String outputPath = results.option('output') as String;
+    final String outputPath = results.option('output')!;
 
     final ReportGenerator generator = ReportGenerator();
     final bool success = await generator.generate(directoryPath, outputPath);

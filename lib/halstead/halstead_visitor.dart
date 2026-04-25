@@ -186,21 +186,21 @@ class _HalsteadVisitor extends RecursiveAstVisitor<void> {
   HalsteadResult calculateResult() {
     final int n1 = _operators.length;
     final int n2 = _operands.length;
-    final int N1 = _operatorCount;
-    final int N2 = _operandCount;
+    final int operatorCount = _operatorCount;
+    final int operandCount = _operandCount;
 
     final int vocabulary = n1 + n2;
-    final int length = N1 + N2;
+    final int length = operatorCount + operandCount;
 
     final double volume = vocabulary > 0 ? length * (math.log(vocabulary) / math.ln2) : 0.0;
-    final double difficulty = n2 > 0 ? (n1 / 2.0) * (N2 / n2) : 0.0;
+    final double difficulty = n2 > 0 ? (n1 / 2.0) * (operandCount / n2) : 0.0;
     final double effort = difficulty * volume;
 
     return HalsteadResult(
       uniqueOperators: n1,
       uniqueOperands: n2,
-      totalOperators: N1,
-      totalOperands: N2,
+      totalOperators: operatorCount,
+      totalOperands: operandCount,
       vocabulary: vocabulary,
       length: length,
       volume: volume,

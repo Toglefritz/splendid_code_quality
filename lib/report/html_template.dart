@@ -505,7 +505,7 @@ class _HtmlTemplate {
         <div class="section">
             <h2>Top 10 Problem Areas</h2>
             <ul class="hotspots-list">
-                ${top10.map((m) => _generateHotspotItem(m)).join('\n')}
+                ${top10.map(_generateHotspotItem).join('\n')}
             </ul>
         </div>
     ''';
@@ -557,7 +557,7 @@ class _HtmlTemplate {
                     </tr>
                 </thead>
                 <tbody>
-                    ${sortedMetrics.map((m) => _generateFileRow(m)).join('\n')}
+                    ${sortedMetrics.map(_generateFileRow).join('\n')}
                 </tbody>
             </table>
         </div>
