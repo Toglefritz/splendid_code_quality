@@ -210,6 +210,7 @@ class _HtmlTemplate {
         .file-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .file-table th {
@@ -219,6 +220,14 @@ class _HtmlTemplate {
             font-weight: 600;
             color: #2c3e50;
             border-bottom: 2px solid #e0e0e0;
+        }
+
+        .file-table th:first-child {
+            width: 40%;
+        }
+
+        .file-table th:nth-child(2) {
+            width: 10%;
         }
 
         .file-table td {
@@ -257,6 +266,8 @@ class _HtmlTemplate {
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
             color: #2c3e50;
+            word-break: break-all;
+            overflow-wrap: break-word;
         }
 
         .theme-toggle {
