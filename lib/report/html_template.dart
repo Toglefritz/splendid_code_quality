@@ -220,10 +220,27 @@ class _HtmlTemplate {
             font-weight: 600;
             color: #2c3e50;
             border-bottom: 2px solid #e0e0e0;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .file-table th:hover {
+            background: #e9ecef;
+        }
+
+        .file-table th .sort-arrow {
+            margin-left: 4px;
+            font-size: 0.75em;
+            opacity: 0.3;
+        }
+
+        .file-table th.sort-active .sort-arrow {
+            opacity: 1;
         }
 
         .file-table th:first-child {
-            width: 40%;
+            width: 32%;
         }
 
         .file-table th:nth-child(2) {
@@ -365,6 +382,10 @@ class _HtmlTemplate {
             background: #1a1a1a;
             border-bottom-color: #404040;
             color: #ffffff;
+        }
+
+        body.dark-theme .file-table th:hover {
+            background: #333333;
         }
 
         body.dark-theme .file-table td {
@@ -555,16 +576,16 @@ class _HtmlTemplate {
     return '''
         <div class="section">
             <h2>All Files</h2>
-            <table class="file-table">
+            <table class="file-table" id="file-table">
                 <thead>
                     <tr>
-                        <th>File</th>
-                        <th>Status</th>
-                        <th>Cyclomatic</th>
-                        <th>Cognitive</th>
-                        <th>LOC</th>
-                        <th>Volume</th>
-                        <th>Inheritance</th>
+                        <th data-sort="string" data-col="0">File<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="status" data-col="1">Status<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="number" data-col="2">Cyclomatic<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="number" data-col="3">Cognitive<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="number" data-col="4">LOC<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="number" data-col="5">Volume<span class="sort-arrow">▲▼</span></th>
+                        <th data-sort="number" data-col="6">Inheritance<span class="sort-arrow">▲▼</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -604,7 +625,7 @@ class _HtmlTemplate {
     return score;
   }
 
-  /// Generates JavaScript for theme toggle functionality.
+  /// Generates JavaScript for theme toggle and table sorting functionality.
   static String _generateThemeScript() {
     return '''
         // Theme toggle functionality
@@ -626,6 +647,74 @@ class _HtmlTemplate {
             themeIcon.textContent = isDark ? '☀️' : '🌙';
             localStorage.setItem('code-quality-theme', isDark ? 'dark' : 'light');
         });
+
+        // Table sorting functionality
+        (function() {
+            const table = document.getElementById('file-table');
+            if (!table) return;
+
+            const headers = table.querySelectorAll('th[data-sort]');
+            let currentSort = { col: -1, descending: true };
+
+            const statusOrder = { 'CRITICAL': 2, 'WARNING': 1, 'GOOD': 0 };
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const col = parseInt(header.getAttribute('data-col'), 10);
+                    const sortType = header.getAttribute('data-sort');
+
+                    // Toggle direction if clicking the same column
+                    if (currentSort.col === col) {
+                        currentSort.descending = !currentSort.descending;
+                    } else {
+                        // Default to descending for numbers/status, ascending for strings
+                        currentSort.descending = sortType !== 'string';
+                        currentSort.col = col;
+                    }
+
+                    // Update header styles
+                    headers.forEach(h => {
+                        h.classList.remove('sort-active');
+                        h.querySelector('.sort-arrow').textContent = '▲▼';
+                    });
+                    header.classList.add('sort-active');
+                    header.querySelector('.sort-arrow').textContent = currentSort.descending ? '▼' : '▲';
+
+                    // Sort the rows
+                    const tbody = table.querySelector('tbody');
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                    rows.sort((a, b) => {
+                        const cellA = a.cells[col];
+                        const cellB = b.cells[col];
+
+                        let valA, valB;
+
+                        if (sortType === 'number') {
+                            valA = parseFloat(cellA.textContent) || 0;
+                            valB = parseFloat(cellB.textContent) || 0;
+                        } else if (sortType === 'status') {
+                            valA = statusOrder[cellA.textContent.trim()] || 0;
+                            valB = statusOrder[cellB.textContent.trim()] || 0;
+                        } else {
+                            valA = cellA.textContent.trim().toLowerCase();
+                            valB = cellB.textContent.trim().toLowerCase();
+                        }
+
+                        let result;
+                        if (sortType === 'string') {
+                            result = valA.localeCompare(valB);
+                        } else {
+                            result = valA - valB;
+                        }
+
+                        return currentSort.descending ? -result : result;
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+        })();
     ''';
   }
 }
