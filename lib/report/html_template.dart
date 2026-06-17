@@ -597,9 +597,13 @@ class _HtmlTemplate {
   }
 
   static String _generateFileRow(FileMetrics metrics) {
+    final int lastSlash = metrics.filePath.lastIndexOf('/');
+    final String directory = lastSlash >= 0 ? metrics.filePath.substring(0, lastSlash + 1) : '';
+    final String fileName = lastSlash >= 0 ? metrics.filePath.substring(lastSlash + 1) : metrics.filePath;
+
     return '''
         <tr>
-            <td class="file-path">${metrics.filePath}</td>
+            <td class="file-path">$directory<strong>$fileName</strong></td>
             <td><span class="status-badge ${metrics.overallStatus}">${metrics.overallStatus.toUpperCase()}</span></td>
             <td><span class="status-badge ${metrics.cyclomaticComplexityStatus}">${metrics.cyclomaticComplexity}</span></td>
             <td><span class="status-badge ${metrics.cognitiveComplexityStatus}">${metrics.cognitiveComplexity}</span></td>

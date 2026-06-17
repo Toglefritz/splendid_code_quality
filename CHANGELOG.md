@@ -1,3 +1,9 @@
+## 1.1.0
+
+- Improved HTML report table layout to prevent long file paths from pushing columns off-screen.
+- Added clickable column headers for sorting the All Files table by any metric.
+- Bold file names in the All Files table for easier scanning.
+
 ## 1.0.1
 
 - Updated README with usage commands for every analysis type.
