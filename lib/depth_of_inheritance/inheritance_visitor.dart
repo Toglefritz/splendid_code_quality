@@ -13,7 +13,7 @@ class _InheritanceVisitor extends RecursiveAstVisitor<void> {
 
   @override
   void visitClassDeclaration(ClassDeclaration node) {
-    final String className = node.name.lexeme;
+    final String className = node.namePart.typeName.lexeme;
     final int depth = _calculateDepth(node);
     _classDepths[className] = depth;
     super.visitClassDeclaration(node);
@@ -30,7 +30,7 @@ class _InheritanceVisitor extends RecursiveAstVisitor<void> {
       return 0;
     }
 
-    final String superclassName = extendsClause.name2.lexeme;
+    final String superclassName = extendsClause.name.lexeme;
 
     // Object is the root of all Dart classes, so depth is 0
     if (superclassName == 'Object') {
